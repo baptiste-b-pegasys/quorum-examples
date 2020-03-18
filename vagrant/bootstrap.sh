@@ -4,11 +4,12 @@ set -eu -o pipefail
 # nodejs source for apt
 curl -sL https://deb.nodesource.com/setup_12.x | sudo -E bash -
 
+add-apt-repository ppa:openjdk-r/ppa
 apt-get update
 packages=(
     parallel       # utility
     unzip          # tessera startup script dependency
-    default-jdk    # tessera runtime dependency
+    openjdk-11-jdk     # tessera runtime dependency
     libleveldb-dev # constellation dependency
     libsodium-dev  # constellation dependency
     nodejs         # cakeshop dependency
@@ -22,16 +23,16 @@ POROSITY_OUTPUT_FILE="/usr/local/bin/porosity"
 
 TESSERA_HOME=/home/vagrant/tessera
 mkdir -p ${TESSERA_HOME}
-TESSERA_VERSION="0.10.3"
+TESSERA_VERSION="0.10.4"
 TESSERA_OUTPUT_FILE="${TESSERA_HOME}/tessera.jar"
 TESSERA_ENCLAVE_OUTPUT_FILE="${TESSERA_HOME}/enclave.jar"
 
 CAKESHOP_HOME=/home/vagrant/cakeshop
 mkdir -p ${CAKESHOP_HOME}
-CAKESHOP_VERSION="0.11.0-RC2"
+CAKESHOP_VERSION="0.11.0"
 CAKESHOP_OUTPUT_FILE="${CAKESHOP_HOME}/cakeshop.war"
 
-QUORUM_VERSION="2.4.0"
+QUORUM_VERSION="2.5.0"
 QUORUM_OUTPUT_FILE="geth.tar.gz"
 
 # download binaries in parallel

@@ -70,12 +70,12 @@ x-quorum-def:
         --nodiscover \
         --verbosity 5 \
         --networkid $${NETWORK_ID} \
-        --rpc \
-        --rpccorsdomain "*" \
-        --rpcvhosts "*" \
-        --rpcaddr 0.0.0.0 \
-        --rpcport 8545 \
-        --rpcapi admin,eth,debug,miner,net,shh,txpool,personal,web3,quorum,$${CONSENSUS_RPC_API} \
+        --http \
+        --http.corsdomain "*" \
+        --http.vhosts "*" \
+        --http.addr 0.0.0.0 \
+        --http.port 8545 \
+        --http.api admin,eth,debug,miner,net,shh,txpool,personal,web3,quorum,$${CONSENSUS_RPC_API} \
         --port 21000 \
         --unlock 0 \
         --allow-insecure-unlock \

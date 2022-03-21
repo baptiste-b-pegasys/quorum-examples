@@ -1,0 +1,35 @@
+version: "3.6"
+
+services:
+  oauth2-server:
+    image: oryd/hydra:v1.3.2-alpine
+    user: 1003:1003
+    hostname: multi-tenancy-oauth2-server
+    container_name: multi-tenancy-oauth2-server
+    ports:
+      - 4444:4444
+      - 4445:4445
+    expose:
+      - 4445
+    restart: unless-stopped
+    networks:
+      - quorum-examples-net
+    environment:
+      - URLS_SELF_ISSUER=https://goquorum.com/oauth/
+      - DSN=memory
+      - STRATEGIES_ACCESS_TOKEN=jwt
+
+networks:
+  quorum-examples-net:
+    name: quorum-examples-net
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+      - subnet: 172.16.239.0/24
+volumes:
+  "vol1":
+  "vol2":
+  "vol3":
+  "vol4":
+  "vol-qlight-1":

@@ -1,0 +1,113 @@
+version: "3.6"
+
+x-quorum-def-node-qlight-ps1:
+  &quorum-def-node-qlight-ps1
+  restart: "on-failure"
+  image: "${QUORUM_DOCKER_IMAGE:-quorumengineering/quorum:21.7.1}"
+  expose:
+    - "21010"
+    - "50400"
+  healthcheck:
+    test: ["CMD", "wget", "--spider", "--proxy", "off", "http://localhost:8545"]
+    interval: 3s
+    timeout: 3s
+    retries: 10
+    start_period: 5s
+  labels:
+    com.quorum.consensus: ${QUORUM_CONSENSUS:-istanbul}
+  entrypoint: ["/usr/bin/dumb-init", "--"]
+  command:
+    - /bin/sh
+    - -c
+    - |
+      set -e
+      apk add jq
+      UDS_WAIT=10
+      DDIR=/qdata/dd
+
+      
+      if [ -d "$${DDIR}" ]; then
+        echo "Resume"
+        CONSENSUS_RPC_API="raft"
+        if [ "${QUORUM_CONSENSUS:-istanbul}" == "istanbul" ]; then
+          CONSENSUS_RPC_API="istanbul"
+        elif [ "${QUORUM_CONSENSUS:-istanbul}" == "qbft" ]; then
+          CONSENSUS_RPC_API="istanbul"
+        fi
+      else
+        mkdir -p $${DDIR}/keystore
+        mkdir -p $${DDIR}/geth
+        cp /examples/raft/nodekey$${NODE_ID} $${DDIR}/geth/nodekey
+        cp /examples/keys/key5 $${DDIR}/keystore/
+        cp /examples/disallowed-nodes.json $${DDIR}/
+        
+        jq 'del(.[4,5,6])' /examples/permissioned-nodes.json  | sed 's/^\(.*\)@.*\?\(.*\)raftport=5040\([0-9]\)\(.*\)$$/\1@172.16.239.1\3:21000?discport=0\&raftport=50400\4/g' > $${DDIR}/static-nodes.json
+        cp $${DDIR}/static-nodes.json $${DDIR}/permissioned-nodes.json
+        cat $${DDIR}/static-nodes.json
+        UPDATE_QUERY=".config.isMPS = false"
+        GENESIS_FILE="/examples/genesis.json"
+        CONSENSUS_RPC_API="raft"
+        if [ "${QUORUM_CONSENSUS:-istanbul}" == "istanbul" ]; then
+          CONSENSUS_RPC_API="istanbul"
+          GENESIS_FILE="/examples/istanbul-genesis.json"
+          #set the extradata for 4 nodes
+          UPDATE_QUERY=$${UPDATE_QUERY}' | .extraData = "0x0000000000000000000000000000000000000000000000000000000000000000f89af85494d8dba507e85f116b1f7e231ca8525fc9008a6966946571d97f340c8495b661a823f2c2145ca47d63c294e36cbeb565b061217930767886474e3cde903ac594f512a992f3fb749857d758ffda1330e590fa915eb8410000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000c0"'
+        elif [ "${QUORUM_CONSENSUS:-istanbul}" == "qbft" ]; then
+          CONSENSUS_RPC_API="istanbul"
+          GENESIS_FILE="/examples/qbft-genesis.json"
+          #set the extradata for 4 nodes
+          UPDATE_QUERY=$${UPDATE_QUERY}' | .extraData = "0xf87aa00000000000000000000000000000000000000000000000000000000000000000f85494d8dba507e85f116b1f7e231ca8525fc9008a6966946571d97f340c8495b661a823f2c2145ca47d63c294e36cbeb565b061217930767886474e3cde903ac594f512a992f3fb749857d758ffda1330e590fa915ec080c0"'
+        fi
+        MPS_GENESIS_FILE=$${DDIR}/mps-genesis.json
+        echo "JQ Update Query:" $${UPDATE_QUERY}
+        jq "$${UPDATE_QUERY}" $${GENESIS_FILE} > $${MPS_GENESIS_FILE}
+        cat $${MPS_GENESIS_FILE}
+        geth --datadir $${DDIR} init $${MPS_GENESIS_FILE}
+      fi
+      MPS_GENESIS_FILE=$${DDIR}/mps-genesis.json
+      NETWORK_ID=$$(cat $${MPS_GENESIS_FILE} | grep chainId | awk -F " " '{print $$2}' | awk -F "," '{print $$1}')
+      
+      echo "Launching"
+      geth \
+        --syncmode full \
+        --qlight.client \
+        --qlight.client.psi PS1 \
+        --qlight.client.serverNode Node1 \
+        --qlight.client.serverNodeRPC node-mps:8547 \
+        --datadir $${DDIR} \
+        --permissioned \
+        --nodiscover \
+        --verbosity 5 \
+        --networkid $${NETWORK_ID} \
+        --http \
+        --http.corsdomain "*" \
+        --http.vhosts "*" \
+        --http.addr 0.0.0.0 \
+        --http.port 8545 \
+        --http.api admin,eth,debug,miner,net,shh,txpool,personal,web3,quorum,$${CONSENSUS_RPC_API} \
+        --ws \
+        --ws.addr 0.0.0.0 \
+        --ws.port 8546 \
+        --ws.api admin,eth,debug,miner,net,shh,txpool,personal,web3,quorum,$${CONSENSUS_RPC_API} \
+        --port 21000 \
+        --identity node$${NODE_ID}-$${QUORUM_CONSENSUS:-istanbul} \
+        ${QUORUM_GETH_ARGS:-}
+
+services:
+  node-qlight-ps1:
+    << : *quorum-def-node-qlight-ps1
+    hostname: node-qlight-ps1
+    ports:
+      - "22010:8545"
+      - "23010:8546"
+    volumes:
+      - vol-qlight-1:/qdata
+      - ./examples/7nodes:/examples:ro
+    depends_on:
+      - node-mps
+    environment:
+      - PRIVATE_CONFIG=ignore
+      - NODE_ID=5
+    networks:
+      quorum-examples-net:
+        ipv4_address: 172.16.239.21

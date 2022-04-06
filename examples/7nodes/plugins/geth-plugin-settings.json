@@ -1,0 +1,15 @@
+{
+ "baseDir": "./plugins",
+ "providers": {
+   "qlighttokenmanager": {
+     "name":"quorum-plugin-qlight-token-manager",
+     "version":"1.0.0",
+     "config": "file://./plugins/qlight-token-manager-plugin-config.json"
+   },
+   "helloworld": {
+    "name":"quorum-plugin-hello-world",
+    "version":"1.0.0",
+    "config": "file://./plugins/hello-world-plugin-config.json"
+  }
+ }
+}

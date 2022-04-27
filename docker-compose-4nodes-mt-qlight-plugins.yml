@@ -867,7 +867,7 @@ services:
       - quorum-examples-net
     environment:
       - URLS_SELF_ISSUER=https://goquorum.com/oauth/
-      - TTL_ACCESS_TOKEN=72h
+      - TTL_ACCESS_TOKEN=2m
       - DSN=memory
       - STRATEGIES_ACCESS_TOKEN=jwt
 #  cakeshop:

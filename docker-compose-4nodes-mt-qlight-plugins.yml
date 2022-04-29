@@ -328,7 +328,7 @@ x-quorum-def-qlight:
         --qlight.client.psi $${PSI} \
         --qlight.client.token.enabled \
         --qlight.client.token.value "bearer $${accessToken}" \
-        --qlight.client.token.management none \
+        --qlight.client.token.management client-security-plugin \
         --qlight.client.serverNode "enode://ac6b1096ca56b9f6d004b779ae3728bf83f8e22453404cc3cef16a3d9b96608bc67c4b30db88e0a5a6c6390213f7acbe1153ff6d23ce57380104288ae19373ef@172.16.239.11:23000?discport=0&raftport=50401" \
         --qlight.client.serverNodeRPC "https://172.16.239.11:8545/?PSI=$${PSI}" \
         --qlight.client.rpc.tls \
@@ -870,17 +870,6 @@ services:
       - TTL_ACCESS_TOKEN=2m
       - DSN=memory
       - STRATEGIES_ACCESS_TOKEN=jwt
-#  cakeshop:
-#    << : *cakeshop-def
-#    hostname: cakeshop
-#    ports:
-#      - "8999:8999"
-#    volumes:
-#      - cakeshopvol:/qdata
-#      - ./examples/7nodes:/examples:ro
-#    networks:
-#      quorum-examples-net:
-#        ipv4_address: 172.16.239.186
 networks:
   quorum-examples-net:
     name: quorum-examples-net
@@ -897,4 +886,3 @@ volumes:
   "vol5":
   "vol6":
   "vol7":
-  "cakeshopvol":

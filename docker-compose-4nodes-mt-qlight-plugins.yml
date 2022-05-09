@@ -334,7 +334,6 @@ x-quorum-def-qlight:
         --qlight.client.rpc.tls \
         --qlight.client.rpc.tls.insecureskipverify \
         --plugins file:///plugins/geth-plugin-settings.json \
-        --plugins.skipverify \
         --password /examples/passwords.txt \
         ${QUORUM_GETH_ARGS:-} $${GETH_ARGS_${QUORUM_CONSENSUS:-istanbul}}
 x-tx-manager-def-node1:

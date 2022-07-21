@@ -1,0 +1,13 @@
+{
+    "URL":"https://multi-tenancy-oauth2-server:4444/oauth2/token",
+    "Method":"POST",
+    "TLSSkipVerify": true,
+    "RefreshAnticipationInMillisecond": 45000,
+    "Parameters":{
+        "grant_type":"client_credentials",
+        "client_id":"${PSI}",
+        "client_secret":"foofoo",
+        "scope":"rpc://eth_* p2p://qlight rpc://admin_* rpc://personal_* rpc://quorumExtension_* rpc://rpc_modules psi://${PSI}?self.eoa=0x0&node.eoa=0x0",
+        "audience":"Node1"
+    }
+}

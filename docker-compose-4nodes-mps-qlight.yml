@@ -5,7 +5,7 @@
 # * QUORUM_GETH_ARGS: extra geth arguments to be included when running geth
 # To use Constellation, set QUORUM_TX_MANAGER_DOCKER_IMAGE to Constellation docker image,
 # e.g.: QUORUM_TX_MANAGER_DOCKER_IMAGE=quorumengineering/constellation:0.3.2 docker-compose up -d
-# To use Remix, set QUORUM_GETH_ARGS="--rpccorsdomain https://remix.ethereum.org"
+# To use Remix, set QUORUM_GETH_ARGS="--http.corsdomain https://remix.ethereum.org"
 version: "3.6"
 x-quorum-def-node1:
   &quorum-def-node1
@@ -58,25 +58,25 @@ x-quorum-def-node1:
       UPDATE_QUERY=".config.isMPS = true"
       GENESIS_FILE="/examples/genesis.json"
       CONSENSUS_RPC_API="raft"
+      GETH_ARGS="--raft --raftport 50400"
       if [ "${QUORUM_CONSENSUS:-istanbul}" == "istanbul" ]; then
         CONSENSUS_RPC_API="istanbul"
         GENESIS_FILE="/examples/istanbul-genesis.json"
         #set the extradata for 4 nodes
         UPDATE_QUERY=$${UPDATE_QUERY}' | .extraData = "0x0000000000000000000000000000000000000000000000000000000000000000f89af85494d8dba507e85f116b1f7e231ca8525fc9008a6966946571d97f340c8495b661a823f2c2145ca47d63c294e36cbeb565b061217930767886474e3cde903ac594f512a992f3fb749857d758ffda1330e590fa915eb8410000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000c0"'
+        GETH_ARGS="--emitcheckpoints --istanbul.blockperiod 2 --mine --miner.threads 1 --syncmode full"
       elif [ "${QUORUM_CONSENSUS:-istanbul}" == "qbft" ]; then
         CONSENSUS_RPC_API="istanbul"
         GENESIS_FILE="/examples/qbft-genesis.json"
         #set the extradata for 4 nodes
         UPDATE_QUERY=$${UPDATE_QUERY}' | .extraData = "0xf87aa00000000000000000000000000000000000000000000000000000000000000000f85494d8dba507e85f116b1f7e231ca8525fc9008a6966946571d97f340c8495b661a823f2c2145ca47d63c294e36cbeb565b061217930767886474e3cde903ac594f512a992f3fb749857d758ffda1330e590fa915ec080c0"'
+        GETH_ARGS="--emitcheckpoints --istanbul.blockperiod 2 --mine --miner.threads 1 --syncmode full"
       fi
       MPS_GENESIS_FILE=$${DDIR}/mps-genesis.json
       echo "JQ Update Query:" $${UPDATE_QUERY}
       jq "$${UPDATE_QUERY}" $${GENESIS_FILE} > $${MPS_GENESIS_FILE}
       cat $${MPS_GENESIS_FILE}
       NETWORK_ID=$$(cat $${MPS_GENESIS_FILE} | grep chainId | awk -F " " '{print $$2}' | awk -F "," '{print $$1}')
-      GETH_ARGS_raft="--raft --raftport 50400"
-      GETH_ARGS_istanbul="--emitcheckpoints --istanbul.blockperiod 2 --mine --miner.threads 1 --syncmode full"
-      GETH_ARGS_qbft="--emitcheckpoints --istanbul.blockperiod 2 --mine --miner.threads 1 --syncmode full"
       ls -al $${DDIR}
       geth --datadir $${DDIR} init $${MPS_GENESIS_FILE}
       ls -al $${DDIR}
@@ -87,23 +87,22 @@ x-quorum-def-node1:
         --nodiscover \
         --verbosity 5 \
         --networkid $${NETWORK_ID} \
-        --rpc \
-        --rpccorsdomain "*" \
-        --rpcvhosts "*" \
-        --rpcaddr 0.0.0.0 \
-        --rpcport 8545 \
-        --rpcapi admin,eth,debug,miner,net,shh,txpool,personal,web3,quorum,quorumExtension,$${CONSENSUS_RPC_API} \
+        --http \
+        --http.corsdomain "*" \
+        --http.vhosts "*" \
+        --http.addr 0.0.0.0 \
+        --http.port 8545 \
+        --http.api admin,eth,debug,miner,net,txpool,personal,web3,quorum,quorumExtension,$${CONSENSUS_RPC_API} \
         --port 21000 \
         --unlock "0,1,2,3" \
         --allow-insecure-unlock \
         --qlight.server \
         --qlight.server.p2p.port 23000 \
-        --nousb \
         --password /examples/passwords.txt \
         --password /examples/passwords.txt \
         --password /examples/passwords.txt \
         --password /examples/passwords.txt \
-        ${QUORUM_GETH_ARGS:-} $${GETH_ARGS_${QUORUM_CONSENSUS:-istanbul}}
+        ${QUORUM_GETH_ARGS:-} $${GETH_ARGS}
 x-quorum-def:
   &quorum-def
   restart: "on-failure"
@@ -151,25 +150,25 @@ x-quorum-def:
       UPDATE_QUERY=".config.isMPS = false"
       GENESIS_FILE="/examples/genesis.json"
       CONSENSUS_RPC_API="raft"
+      GETH_ARGS="--raft --raftport 50400"
       if [ "${QUORUM_CONSENSUS:-istanbul}" == "istanbul" ]; then
         CONSENSUS_RPC_API="istanbul"
         GENESIS_FILE="/examples/istanbul-genesis.json"
         #set the extradata for 4 nodes
         UPDATE_QUERY=$${UPDATE_QUERY}' | .extraData = "0x0000000000000000000000000000000000000000000000000000000000000000f89af85494d8dba507e85f116b1f7e231ca8525fc9008a6966946571d97f340c8495b661a823f2c2145ca47d63c294e36cbeb565b061217930767886474e3cde903ac594f512a992f3fb749857d758ffda1330e590fa915eb8410000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000c0"'
+        GETH_ARGS="--emitcheckpoints --istanbul.blockperiod 2 --mine --miner.threads 1 --syncmode full"
       elif [ "${QUORUM_CONSENSUS:-istanbul}" == "qbft" ]; then
         CONSENSUS_RPC_API="qbft"
         GENESIS_FILE="/examples/qbft-genesis.json"
         #set the extradata for 4 nodes
         UPDATE_QUERY=$${UPDATE_QUERY}' | .extraData = "0xf87aa00000000000000000000000000000000000000000000000000000000000000000f85494d8dba507e85f116b1f7e231ca8525fc9008a6966946571d97f340c8495b661a823f2c2145ca47d63c294e36cbeb565b061217930767886474e3cde903ac594f512a992f3fb749857d758ffda1330e590fa915ec080c0"'
+        GETH_ARGS="--emitcheckpoints --istanbul.blockperiod 2 --mine --miner.threads 1 --syncmode full"
       fi
       MPS_GENESIS_FILE=$${DDIR}/mps-genesis.json
       echo "JQ Update Query:" $${UPDATE_QUERY}
       jq "$${UPDATE_QUERY}" $${GENESIS_FILE} > $${MPS_GENESIS_FILE}
       cat $${MPS_GENESIS_FILE}
       NETWORK_ID=$$(cat $${MPS_GENESIS_FILE} | grep chainId | awk -F " " '{print $$2}' | awk -F "," '{print $$1}')
-      GETH_ARGS_raft="--raft --raftport 50400"
-      GETH_ARGS_istanbul="--emitcheckpoints --istanbul.blockperiod 2 --mine --miner.threads 1 --syncmode full"
-      GETH_ARGS_qbft="--emitcheckpoints --istanbul.blockperiod 2 --mine --miner.threads 1 --syncmode full"
       geth --datadir $${DDIR} init $${MPS_GENESIS_FILE}
       geth \
         --identity node$${NODE_ID}-${QUORUM_CONSENSUS:-istanbul} \
@@ -178,18 +177,17 @@ x-quorum-def:
         --nodiscover \
         --verbosity 5 \
         --networkid $${NETWORK_ID} \
-        --rpc \
-        --rpccorsdomain "*" \
-        --rpcvhosts "*" \
-        --rpcaddr 0.0.0.0 \
-        --rpcport 8545 \
-        --rpcapi admin,eth,debug,miner,net,shh,txpool,personal,web3,quorum,quorumExtension,$${CONSENSUS_RPC_API} \
+        --http \
+        --http.corsdomain "*" \
+        --http.vhosts "*" \
+        --http.addr 0.0.0.0 \
+        --http.port 8545 \
+        --http.api admin,eth,debug,miner,net,txpool,personal,web3,quorum,quorumExtension,$${CONSENSUS_RPC_API} \
         --port 21000 \
         --unlock 0 \
         --allow-insecure-unlock \
-        --nousb \
         --password /examples/passwords.txt \
-        ${QUORUM_GETH_ARGS:-} $${GETH_ARGS_${QUORUM_CONSENSUS:-istanbul}}
+        ${QUORUM_GETH_ARGS:-} $${GETH_ARGS}
 x-quorum-def-qlight:
   &quorum-def-qlight
   restart: "on-failure"
@@ -237,25 +235,25 @@ x-quorum-def-qlight:
       UPDATE_QUERY=".config.isMPS = false"
       GENESIS_FILE="/examples/genesis.json"
       CONSENSUS_RPC_API="raft"
+      GETH_ARGS="--raft --raftport 50400 --syncmode full"
       if [ "${QUORUM_CONSENSUS:-istanbul}" == "istanbul" ]; then
         CONSENSUS_RPC_API="istanbul"
         GENESIS_FILE="/examples/istanbul-genesis.json"
         #set the extradata for 4 nodes
         UPDATE_QUERY=$${UPDATE_QUERY}' | .extraData = "0x0000000000000000000000000000000000000000000000000000000000000000f89af85494d8dba507e85f116b1f7e231ca8525fc9008a6966946571d97f340c8495b661a823f2c2145ca47d63c294e36cbeb565b061217930767886474e3cde903ac594f512a992f3fb749857d758ffda1330e590fa915eb8410000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000c0"'
+        GETH_ARGS="--emitcheckpoints --istanbul.blockperiod 2 --syncmode full"
       elif [ "${QUORUM_CONSENSUS:-istanbul}" == "qbft" ]; then
         CONSENSUS_RPC_API="qbft"
         GENESIS_FILE="/examples/qbft-genesis.json"
         #set the extradata for 4 nodes
         UPDATE_QUERY=$${UPDATE_QUERY}' | .extraData = "0xf87aa00000000000000000000000000000000000000000000000000000000000000000f85494d8dba507e85f116b1f7e231ca8525fc9008a6966946571d97f340c8495b661a823f2c2145ca47d63c294e36cbeb565b061217930767886474e3cde903ac594f512a992f3fb749857d758ffda1330e590fa915ec080c0"'
+        GETH_ARGS="--emitcheckpoints --istanbul.blockperiod 2 --syncmode full"
       fi
       MPS_GENESIS_FILE=$${DDIR}/mps-genesis.json
       echo "JQ Update Query:" $${UPDATE_QUERY}
       jq "$${UPDATE_QUERY}" $${GENESIS_FILE} > $${MPS_GENESIS_FILE}
       cat $${MPS_GENESIS_FILE}
       NETWORK_ID=$$(cat $${MPS_GENESIS_FILE} | grep chainId | awk -F " " '{print $$2}' | awk -F "," '{print $$1}')
-      GETH_ARGS_raft="--raft --raftport 50400 --syncmode full"
-      GETH_ARGS_istanbul="--emitcheckpoints --istanbul.blockperiod 2 --syncmode full"
-      GETH_ARGS_qbft="--emitcheckpoints --istanbul.blockperiod 2 --syncmode full"
       geth --datadir $${DDIR} init $${MPS_GENESIS_FILE}
       geth \
         --identity node$${NODE_ID}-${QUORUM_CONSENSUS:-istanbul} \
@@ -264,12 +262,12 @@ x-quorum-def-qlight:
         --nodiscover \
         --verbosity 5 \
         --networkid $${NETWORK_ID} \
-        --rpc \
-        --rpccorsdomain "*" \
-        --rpcvhosts "*" \
-        --rpcaddr 0.0.0.0 \
-        --rpcport 8545 \
-        --rpcapi admin,eth,debug,miner,net,shh,txpool,personal,web3,quorum,quorumExtension,$${CONSENSUS_RPC_API} \
+        --http \
+        --http.corsdomain "*" \
+        --http.vhosts "*" \
+        --http.addr 0.0.0.0 \
+        --http.port 8545 \
+        --http.api admin,eth,debug,miner,net,txpool,personal,web3,quorum,quorumExtension,$${CONSENSUS_RPC_API} \
         --port 21000 \
         --unlock 0 \
         --allow-insecure-unlock \
@@ -277,9 +275,8 @@ x-quorum-def-qlight:
         --qlight.client.psi PS1 \
         --qlight.client.serverNode "enode://ac6b1096ca56b9f6d004b779ae3728bf83f8e22453404cc3cef16a3d9b96608bc67c4b30db88e0a5a6c6390213f7acbe1153ff6d23ce57380104288ae19373ef@172.16.239.11:23000?discport=0&raftport=50401" \
         --qlight.client.serverNodeRPC "http://172.16.239.11:8545/?PSI=PS1" \
-        --nousb \
         --password /examples/passwords.txt \
-        ${QUORUM_GETH_ARGS:-} $${GETH_ARGS_${QUORUM_CONSENSUS:-istanbul}}
+        ${QUORUM_GETH_ARGS:-} $${GETH_ARGS}
 x-tx-manager-def-node1:
   &tx-manager-def-node1
   image: "${QUORUM_TX_MANAGER_DOCKER_IMAGE:-quorumengineering/tessera:22.1.0}"

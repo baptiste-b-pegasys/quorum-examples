@@ -127,13 +127,12 @@ x-quorum-def-node1:
         --http.vhosts "*" \
         --http.addr 0.0.0.0 \
         --http.port 8545 \
-        --http.api admin,eth,debug,miner,net,shh,txpool,personal,web3,quorum,quorumExtension,$${CONSENSUS_RPC_API} \
+        --http.api admin,eth,debug,miner,net,txpool,personal,web3,quorum,quorumExtension,$${CONSENSUS_RPC_API} \
         --port 21000 \
         --unlock "0,1,2,3" \
         --allow-insecure-unlock \
         --qlight.server \
         --qlight.server.p2p.port 23000 \
-        --nousb \
         --password /examples/passwords.txt \
         --password /examples/passwords.txt \
         --password /examples/passwords.txt \
@@ -222,7 +221,7 @@ x-quorum-def:
         --http.vhosts "*" \
         --http.addr 0.0.0.0 \
         --http.port 8545 \
-        --http.api admin,eth,debug,miner,net,shh,txpool,personal,web3,quorum,quorumExtension,$${CONSENSUS_RPC_API} \
+        --http.api admin,eth,debug,miner,net,txpool,personal,web3,quorum,quorumExtension,$${CONSENSUS_RPC_API} \
         --port 21000 \
         --unlock 0 \
         --allow-insecure-unlock \
@@ -276,25 +275,25 @@ x-quorum-def-qlight:
       UPDATE_QUERY=".config.isMPS = false"
       GENESIS_FILE="/examples/genesis.json"
       CONSENSUS_RPC_API="raft"
+      GETH_ARGS="--raft --syncmode full"
       if [ "${QUORUM_CONSENSUS:-istanbul}" == "istanbul" ]; then
         CONSENSUS_RPC_API="istanbul"
         GENESIS_FILE="/examples/istanbul-genesis.json"
         #set the extradata for 4 nodes
         UPDATE_QUERY=$${UPDATE_QUERY}' | .extraData = "0x0000000000000000000000000000000000000000000000000000000000000000f89af85494d8dba507e85f116b1f7e231ca8525fc9008a6966946571d97f340c8495b661a823f2c2145ca47d63c294e36cbeb565b061217930767886474e3cde903ac594f512a992f3fb749857d758ffda1330e590fa915eb8410000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000c0"'
+        GETH_ARGS="--emitcheckpoints --istanbul.blockperiod 2 --syncmode full"
       elif [ "${QUORUM_CONSENSUS:-istanbul}" == "qbft" ]; then
         CONSENSUS_RPC_API="qbft"
         GENESIS_FILE="/examples/qbft-genesis.json"
         #set the extradata for 4 nodes
         UPDATE_QUERY=$${UPDATE_QUERY}' | .extraData = "0xf87aa00000000000000000000000000000000000000000000000000000000000000000f85494d8dba507e85f116b1f7e231ca8525fc9008a6966946571d97f340c8495b661a823f2c2145ca47d63c294e36cbeb565b061217930767886474e3cde903ac594f512a992f3fb749857d758ffda1330e590fa915ec080c0"'
+        GETH_ARGS="--emitcheckpoints --istanbul.blockperiod 2 --syncmode full"
       fi
       MPS_GENESIS_FILE=$${DDIR}/mps-genesis.json
       echo "JQ Update Query:" $${UPDATE_QUERY}
       jq "$${UPDATE_QUERY}" $${GENESIS_FILE} > $${MPS_GENESIS_FILE}
       cat $${MPS_GENESIS_FILE}
       NETWORK_ID=$$(cat $${MPS_GENESIS_FILE} | grep chainId | awk -F " " '{print $$2}' | awk -F "," '{print $$1}')
-      GETH_ARGS_raft="--raft --syncmode full"
-      GETH_ARGS_istanbul="--emitcheckpoints --istanbul.blockperiod 2 --syncmode full"
-      GETH_ARGS_qbft="--emitcheckpoints --istanbul.blockperiod 2 --syncmode full"
       curl -k -q -X DELETE https://multi-tenancy-oauth2-server:4445/clients/$${PSI}
       curl -k -s -X POST https://multi-tenancy-oauth2-server:4445/clients \
         -H "Content-Type: application/json" \
@@ -316,7 +315,7 @@ x-quorum-def-qlight:
         --http.vhosts "*" \
         --http.addr 0.0.0.0 \
         --http.port 8545 \
-        --http.api admin,eth,debug,miner,net,shh,txpool,personal,web3,quorum,quorumExtension,$${CONSENSUS_RPC_API},plugin@helloworld \
+        --http.api admin,eth,debug,miner,net,txpool,personal,web3,quorum,quorumExtension,$${CONSENSUS_RPC_API},plugin@helloworld \
         --port 21000 \
         --unlock 0 \
         --allow-insecure-unlock \
@@ -331,7 +330,7 @@ x-quorum-def-qlight:
         --qlight.client.rpc.tls.insecureskipverify \
         --plugins file:///plugins/geth-plugin-settings.json \
         --password /examples/passwords.txt \
-        ${QUORUM_GETH_ARGS:-} $${GETH_ARGS_${QUORUM_CONSENSUS:-istanbul}}
+        ${QUORUM_GETH_ARGS:-} $${GETH_ARGS}
 x-tx-manager-def-node1:
   &tx-manager-def-node1
   image: "${QUORUM_TX_MANAGER_DOCKER_IMAGE:-quorumengineering/tessera:22.1.0}"

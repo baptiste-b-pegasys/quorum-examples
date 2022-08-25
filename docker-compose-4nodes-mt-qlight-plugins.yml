@@ -189,25 +189,25 @@ x-quorum-def:
       UPDATE_QUERY=".config.isMPS = false"
       GENESIS_FILE="/examples/genesis.json"
       CONSENSUS_RPC_API="raft"
+      GETH_ARGS_raft="--raft --raftport 50400"
       if [ "${QUORUM_CONSENSUS:-istanbul}" == "istanbul" ]; then
         CONSENSUS_RPC_API="istanbul"
         GENESIS_FILE="/examples/istanbul-genesis.json"
         #set the extradata for 4 nodes
         UPDATE_QUERY=$${UPDATE_QUERY}' | .extraData = "0x0000000000000000000000000000000000000000000000000000000000000000f89af85494d8dba507e85f116b1f7e231ca8525fc9008a6966946571d97f340c8495b661a823f2c2145ca47d63c294e36cbeb565b061217930767886474e3cde903ac594f512a992f3fb749857d758ffda1330e590fa915eb8410000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000c0"'
+        GETH_ARGS="--emitcheckpoints --istanbul.blockperiod 2 --mine --miner.threads 1 --syncmode full"
       elif [ "${QUORUM_CONSENSUS:-istanbul}" == "qbft" ]; then
         CONSENSUS_RPC_API="istanbul"
         GENESIS_FILE="/examples/qbft-genesis.json"
         #set the extradata for 4 nodes
         UPDATE_QUERY=$${UPDATE_QUERY}' | .extraData = "0xf87aa00000000000000000000000000000000000000000000000000000000000000000f85494d8dba507e85f116b1f7e231ca8525fc9008a6966946571d97f340c8495b661a823f2c2145ca47d63c294e36cbeb565b061217930767886474e3cde903ac594f512a992f3fb749857d758ffda1330e590fa915ec080c0"'
+        GETH_ARGS="--emitcheckpoints --istanbul.blockperiod 2 --mine --miner.threads 1 --syncmode full"
       fi
       MPS_GENESIS_FILE=$${DDIR}/mps-genesis.json
       echo "JQ Update Query:" $${UPDATE_QUERY}
       jq "$${UPDATE_QUERY}" $${GENESIS_FILE} > $${MPS_GENESIS_FILE}
       cat $${MPS_GENESIS_FILE}
       NETWORK_ID=$$(cat $${MPS_GENESIS_FILE} | grep chainId | awk -F " " '{print $$2}' | awk -F "," '{print $$1}')
-      GETH_ARGS_raft="--raft --raftport 50400"
-      GETH_ARGS_istanbul="--emitcheckpoints --istanbul.blockperiod 2 --mine --miner.threads 1 --syncmode full"
-      GETH_ARGS_qbft="--emitcheckpoints --istanbul.blockperiod 2 --mine --miner.threads 1 --syncmode full"
       geth --datadir $${DDIR} init $${MPS_GENESIS_FILE}
       geth \
         --identity node$${NODE_ID}-${QUORUM_CONSENSUS:-istanbul} \
@@ -226,7 +226,7 @@ x-quorum-def:
         --unlock 0 \
         --allow-insecure-unlock \
         --password /examples/passwords.txt \
-        ${QUORUM_GETH_ARGS:-} $${GETH_ARGS_${QUORUM_CONSENSUS:-istanbul}}
+        ${QUORUM_GETH_ARGS:-} $${GETH_ARGS}
 x-quorum-def-qlight:
   &quorum-def-qlight
   restart: "on-failure"

@@ -3,7 +3,7 @@
   "providers": {
     "qlighttokenmanager": {
       "name":"quorum-plugin-qlight-token-manager",
-      "version":"0.0.1",
+      "version":"0.0.2",
       "config": "file://./plugins/qlight-token-manager-plugin-config.json"
     }
   }
